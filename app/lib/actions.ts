@@ -3,31 +3,8 @@ import { z } from 'zod';
 import { sql } from '@vercel/postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { signIn } from '@/auth';
+import { signIn,signOut } from '@/auth';
 
-
-export async function authenticate(
-  prevState: string | undefined,
-  formData: FormData,
-) {
-  try {
-
-    console.log('formData', formData);
-    console.log('Object.fromEntries(formData)', Object.fromEntries(formData));
-
-    await signIn('credentials', Object.fromEntries(formData));
-
-
-  } catch (error) {
-
-    console.log('Failed to sign in:', error); 
-
-    if ((error as Error).message.includes('CredentialsSignin')) {
-      return 'CredentialSignin';
-    }
-    throw error;
-  }
-}
 
 const InvoiceSchema = z.object({
   id: z.string(),
@@ -130,4 +107,40 @@ export async function updateInvoice(formData: FormData) {
 
     await sql`DELETE FROM invoices WHERE id = ${id}`;
     revalidatePath('/dashboard/invoices');
+  }
+
+
+
+  export async function authenticate(
+    prevState: string | undefined,
+    formData: FormData,
+  ) {
+    try {
+      console.log('authenticating',Object.fromEntries(formData));
+
+      await signIn('credentials',{
+        redirect: false, 
+        email: Object.fromEntries(formData).email,
+        password: Object.fromEntries(formData).password,
+      });
+
+
+    } catch (error) {
+
+      console.log('error', error);
+
+      if ((error as Error).message.includes('CredentialsSignin')) {
+        return 'CredentialSignin';
+      }
+
+      throw error;
+     
+    }
+    //Redirect to dashboard
+    redirect('/dashboard');
+  }
+
+  export async function signOutUser() {
+    await signOut();
+    //redirect('/login');
   }

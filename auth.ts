@@ -17,6 +17,7 @@ async function getUser(email: string): Promise<User | undefined> {
 }
  
 export const { auth, signIn, signOut } = NextAuth({
+  secret: process.env.NEXT_PUBLIC_SECRET,
   ...authConfig,
   providers: [
     Credentials({
@@ -26,23 +27,26 @@ export const { auth, signIn, signOut } = NextAuth({
           .safeParse(credentials);
  
         if (parsedCredentials.success) {
+
+
           const { email, password } = parsedCredentials.data;
           const user = await getUser(email);
 
-          console.log('user', user);
-
           if (!user) return null;
+
+
           const passwordsMatch = await bcrypt.compare(password, user.password);
 
-          console.log('passwordsMatch', passwordsMatch);
+
 
           if (passwordsMatch) {
-            console.log('Valid credentials',user);
-            return user;
+            console.log('Password Match', user);
+            return user; 
           }
+
         }
- 
-        console.log('Invalid credentials');
+
+
         return null;
       },
     }),
